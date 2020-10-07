@@ -27,6 +27,7 @@ import os
 import datetime
 from subprocess import Popen, PIPE
 from easytello import tello
+import cv2
 # from tellopy import logger
 
 # log = tellopy.logger.Logger('TelloUI')
@@ -68,6 +69,7 @@ def take_picture(drone, speed):
     if speed == 0:
         return
     drone.take_picture()
+    
 
 def palm_land(drone, speed):
     if speed == 0:
@@ -201,14 +203,21 @@ def videoFrameHandler(event, sender, data):
         status_print(str(err))
         video_recorder = None
 
+
 def handleFileReceived(event, sender, data):
     global date_fmt
     # Create a file in ~/Pictures/ to receive image data from the drone.
-    path = '%s/Pictures/tello-%s.jpeg' % (
-        os.getenv('HOME'),
-        datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+    #path = '%s/Pictures/tello-%s.jpeg' % (
+    #    os.getenv('HOME'),
+    #    datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+    path = '%s/Pictures/tello.jpeg' % (
+        os.getenv('HOME'))
+    
     with open(path, 'wb') as fd:
         fd.write(data)
+    #print("Image saved")
+    #print(data)    
+    #cv2.imshow("Image", data)
     status_print('Saved photo to %s' % path)
 
 def main():
@@ -235,6 +244,7 @@ def main():
 
     try:
         while 1:
+            #drone.take_picture() funciona mas fica muito cagado
             time.sleep(0.01)  # loop with pygame.event.get() is too mush tight w/o some sleep
             for e in pygame.event.get():
                 # WASD for movement
