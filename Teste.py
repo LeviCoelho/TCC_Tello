@@ -28,10 +28,13 @@ import datetime
 from subprocess import Popen, PIPE
 from easytello import tello
 import cv2
+
+from easytello import tello
 # from tellopy import logger
 
 # log = tellopy.logger.Logger('TelloUI')
 
+my_drone = tello.Tello()
 prev_flight_data = None
 video_player = None
 video_recorder = None
@@ -185,7 +188,7 @@ def videoFrameHandler(event, sender, data):
     global video_player
     global video_recorder
     if video_player is None:
-        cmd = [ 'mplayer', '-fps', '35', '-really-quiet' ]
+        cmd = [ 'mplayer', '-fps', '30', '-really-quiet' ]
         if wid is not None:
             cmd = cmd + [ '-wid', str(wid) ]
         video_player = Popen(cmd + ['-'], stdin=PIPE)
@@ -206,26 +209,106 @@ def videoFrameHandler(event, sender, data):
 
 def handleFileReceived(event, sender, data):
     global date_fmt
-    # Create a file in ~/Pictures/ to receive image data from the drone.
-
-    path = '%s/Pictures/tello.jpeg' % (
-        os.getenv('HOME'))
+    #Create a file in ~/Pictures/ to receive image data from the drone.
+    path = '%s/Pictures/tello-%s.jpeg' % (
+        os.getenv('HOME'),
+        datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+    #path = '%s/Pictures/tello.jpeg' % (
+        #os.getenv('HOME'))
     
+    with open(path, 'wb') as fd:
+        fd.write(data)
+    #print("Image saved")
+    #print(data)    
+    #cv2.imshow("Image", data)
+    status_print('Saved photo to %s' % path)
+
+    # Create a file in ~/Pictures/ to receive image data from the drone.
+    #path = '%s/Pictures/tello.jpeg' % (os.getenv('HOME'))
     with open(path, 'wb') as fd:
         fd.write(data)
     status_print('Saved photo to %s' % path)
 
 def main():
+    pygame.init()
+    pygame.display.init()
+    pygame.display.set_mode((1000, 600))
+    pygame.font.init()
+
+    global font
+    font = pygame.font.SysFont("dejavusansmono", 32)
+
+    global wid
+    if 'window' in pygame.display.get_wm_info():
+        wid = pygame.display.get_wm_info()['window']
+    print("Tello video WID:", wid)
+
     drone = tellopy.Tello()
     drone.connect()
+    drone.start_video()
     drone.subscribe(drone.EVENT_FLIGHT_DATA, flightDataHandler)
     drone.subscribe(drone.EVENT_VIDEO_FRAME, videoFrameHandler)
     drone.subscribe(drone.EVENT_FILE_RECEIVED, handleFileReceived)
     speed = 30
+    try:
+        while 1:
+            #drone.take_picture() funciona mas fica muito cagado
+            time.sleep(0.01)  # loop with pygame.event.get() is too mush tight w/o some sleep
+            for e in pygame.event.get():
+                # WASD for movement
+                if e.type == pygame.locals.KEYDOWN:
+                    print('+' + pygame.key.name(e.key))
+                    keyname = pygame.key.name(e.key)
+                    if keyname == 'escape':
+                        drone.quit()
+                        exit(0)
+                    if keyname in controls:
+                        key_handler = controls[keyname]
+                        if keyname == 'w':
+                            my_drone.forward(50)
+                            drone.take_picture()
+                        if keyname == 's':
+                            my_drone.backward(50)
+                            drone.take_picture()
+                        if keyname == 'a':
+                            my_drone.left(50)
+                            drone.take_picture()     
+                        if keyname == 'd':
+                            my_drone.right(50)
+                            drone.take_picture()   
+                        if keyname == 'space':
+                            my_drone.up(50)
+                            drone.take_picture()   
+                        if keyname == 'tab':
+                            my_drone.takeoff()
+                            drone.take_picture() 
+                        if keyname == 'backspace':
+                            my_drone.land()
+                            drone.take_picture()  
+                        if keyname == 'up':
+                            my_drone.up(50)
+                            drone.take_picture()   
+                        if keyname == 'down':
+                            my_drone.down(50)
+                            drone.take_picture()  
+                        
+                elif e.type == pygame.locals.KEYUP:
+                    print('-' + pygame.key.name(e.key))
+                    keyname = pygame.key.name(e.key)
+                    if keyname in controls:
+                        key_handler = controls[keyname]
+                        if type(key_handler) == str:
+                            getattr(drone, key_handler)(0)
+                        else:
+                            key_handler(drone, 0)
+    except e:
+        print(str(e))
+    finally:
+        print('Shutting down connection to drone...')
+        if video_recorder:
+            toggle_recording(drone, 1)
+        drone.quit()
+        exit(1)
 
-    while 1:
-        time.sleep(.1)     
-        drone.take_picture() #funciona mas fica muito cagado
-            
 if __name__ == '__main__':
     main()
