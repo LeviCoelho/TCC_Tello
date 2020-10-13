@@ -27,14 +27,10 @@ import os
 import datetime
 from subprocess import Popen, PIPE
 from easytello import tello
-import cv2
-
-from easytello import tello
 # from tellopy import logger
 
 # log = tellopy.logger.Logger('TelloUI')
 
-my_drone = tello.Tello()
 prev_flight_data = None
 video_player = None
 video_recorder = None
@@ -72,7 +68,6 @@ def take_picture(drone, speed):
     if speed == 0:
         return
     drone.take_picture()
-    
 
 def palm_land(drone, speed):
     if speed == 0:
@@ -188,7 +183,7 @@ def videoFrameHandler(event, sender, data):
     global video_player
     global video_recorder
     if video_player is None:
-        cmd = [ 'mplayer', '-fps', '30', '-really-quiet' ]
+        cmd = [ 'mplayer', '-fps', '35', '-really-quiet' ]
         if wid is not None:
             cmd = cmd + [ '-wid', str(wid) ]
         video_player = Popen(cmd + ['-'], stdin=PIPE)
@@ -206,25 +201,12 @@ def videoFrameHandler(event, sender, data):
         status_print(str(err))
         video_recorder = None
 
-
 def handleFileReceived(event, sender, data):
     global date_fmt
-    #Create a file in ~/Pictures/ to receive image data from the drone.
+    # Create a file in ~/Pictures/ to receive image data from the drone.
     path = '%s/Pictures/tello-%s.jpeg' % (
         os.getenv('HOME'),
         datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
-    #path = '%s/Pictures/tello.jpeg' % (
-        #os.getenv('HOME'))
-    
-    with open(path, 'wb') as fd:
-        fd.write(data)
-    #print("Image saved")
-    #print(data)    
-    #cv2.imshow("Image", data)
-    status_print('Saved photo to %s' % path)
-
-    # Create a file in ~/Pictures/ to receive image data from the drone.
-    #path = '%s/Pictures/tello.jpeg' % (os.getenv('HOME'))
     with open(path, 'wb') as fd:
         fd.write(data)
     status_print('Saved photo to %s' % path)
@@ -250,9 +232,9 @@ def main():
     drone.subscribe(drone.EVENT_VIDEO_FRAME, videoFrameHandler)
     drone.subscribe(drone.EVENT_FILE_RECEIVED, handleFileReceived)
     speed = 30
+
     try:
         while 1:
-            #drone.take_picture() funciona mas fica muito cagado
             time.sleep(0.01)  # loop with pygame.event.get() is too mush tight w/o some sleep
             for e in pygame.event.get():
                 # WASD for movement
@@ -264,34 +246,11 @@ def main():
                         exit(0)
                     if keyname in controls:
                         key_handler = controls[keyname]
-                        if keyname == 'w':
-                            my_drone.forward(50)
-                            drone.take_picture()
-                        if keyname == 's':
-                            my_drone.backward(50)
-                            drone.take_picture()
-                        if keyname == 'a':
-                            my_drone.left(50)
-                            drone.take_picture()     
-                        if keyname == 'd':
-                            my_drone.right(50)
-                            drone.take_picture()   
-                        if keyname == 'space':
-                            my_drone.up(50)
-                            drone.take_picture()   
-                        if keyname == 'tab':
-                            my_drone.takeoff()
-                            drone.take_picture() 
-                        if keyname == 'backspace':
-                            my_drone.land()
-                            drone.take_picture()  
-                        if keyname == 'up':
-                            my_drone.up(50)
-                            drone.take_picture()   
-                        if keyname == 'down':
-                            my_drone.down(50)
-                            drone.take_picture()  
-                        
+                        if type(key_handler) == str:
+                            getattr(drone, key_handler)(speed)
+                        else:
+                            key_handler(drone, speed)
+
                 elif e.type == pygame.locals.KEYUP:
                     print('-' + pygame.key.name(e.key))
                     keyname = pygame.key.name(e.key)
