@@ -27,6 +27,7 @@ import os
 import datetime
 from subprocess import Popen, PIPE
 from easytello import tello
+import cv2, os
 # from tellopy import logger
 
 # log = tellopy.logger.Logger('TelloUI')
@@ -183,13 +184,12 @@ def videoFrameHandler(event, sender, data):
     global video_player
     global video_recorder
     if video_player is None:
-        cmd = [ 'mplayer', '-fps', '35', '-really-quiet' ]
+        cmd = [ 'mplayer', '-fps', '30', '-really-quiet' ]
         if wid is not None:
             cmd = cmd + [ '-wid', str(wid) ]
         video_player = Popen(cmd + ['-'], stdin=PIPE)
 
-    try:
-        cv2
+    try: 
         video_player.stdin.write(data)
     except IOError as err:
         status_print(str(err))
@@ -209,6 +209,7 @@ def handleFileReceived(event, sender, data):
         os.getenv('HOME'),
         datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
     with open(path, 'wb') as fd:
+        cv2.imshow('frame',data)
         fd.write(data)
     status_print('Saved photo to %s' % path)
 
