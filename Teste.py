@@ -16,14 +16,15 @@ def find(name, path):
 
 def main():
     drone = tellopy.Tello()
-    
-    cv2path = os.path.dirname(cv2.__file__)
-    haar_path = find('haarcascades', cv2path)
-    xml_name = 'haarcascade_frontalface_alt2.xml'
-    xml_path = os.path.join(haar_path, xml_name)
 
+    #cv2path = os.path.dirname(cv2.__file__)
+    #haar_path = find('haarcascades', cv2path)
+    #xml_name = 'haarcascade_frontalface_alt2.xml'
+    xml_path = '/home/levi/TCC_Tello/haarcascade_frontalface_alt2.xml' #os.path.join(haar_path, xml_name)
+    
     # TODO: Inicializar Classificador
-    clf = os.CascadeClassifier(xml_path)
+    clf = cv2.CascadeClassifier(xml_path)
+    
     
     try:
         drone.connect()
@@ -45,25 +46,25 @@ def main():
             for frame in container.decode(video=0):
                 if 0 < frame_skip:
                     frame_skip = frame_skip - 1
+                    print('Wait %s/300'%frame)
                     continue
                 start_time = time.time()
-                image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_RGB2BGR)
+                image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
                 cv2.imshow('Original', image)
+                
                 #cv2.imshow('Canny', cv2.Canny(image, 100, 200))
-                
+                 
                 # TODO: Converter para tons de cinza
-                gray = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
-            
-                # TODO: Classificar
-                faces = clf.detectMultiScale(gray)
-            
-                # TODO: Desenhar retangulo
-                for x, y, w, h in faces:
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0))
-            
-                # Visualizar
-                cv2.imshow('frame',frame)
                 
+                # TODO: Classificar
+                faces = clf.detectMultiScale(image)
+             
+                 # TODO: Desenhar retangulo
+                for x, y, w, h in faces:
+                    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0))
+             
+                 # Visualizar
+                cv2.imshow('Faces',image)
                 
                 cv2.waitKey(1)
                 if frame.time_base < 1.0/60:
