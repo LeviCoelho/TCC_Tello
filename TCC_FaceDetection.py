@@ -54,21 +54,16 @@ def main():
                 image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
                 #cv2.imshow('Original', image)
                 
-                #cv2.imshow('Canny', cv2.Canny(image, 100, 200))
-
                 # TODO: Classificar
                 faces = clf.detectMultiScale(image)
              
-                 # TODO: Desenhar retangulo
+                # TODO: Desenhar retangulo
                 for x, y, w, h in faces:
                     cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0))
                     # Create a file in ~/Pictures/ to receive image data from the drone.
                     path = '%s/Pictures/tello-%s.jpeg' % (os.getenv('HOME'),datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
                     cv2.imwrite(path,image)
-                    #with open(path, 'wb') as fd:
-                    #    fd.write(image)
-                    #print('Saved image to %s' % path)
-             
+
                  # Visualizar
                 cv2.imshow('Faces',image)
                 
