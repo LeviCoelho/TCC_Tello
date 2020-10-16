@@ -11,10 +11,12 @@ import pygame.display
 import pygame.key
 import pygame.locals
 import pygame.font
-#from easytello import tello
+from easytello import tello
 
 date_fmt = '%Y-%m-%d_%H%M%S'
-#my_drone = tello.Tello()
+
+def status_print(text):
+    pygame.display.set_caption(text)
 
 def find(name, path):
     for root, dirs, files in os.walk(path):
@@ -23,32 +25,34 @@ def find(name, path):
     # Caso nao encontre, recursao para diretorios anteriores
     return find(name, os.path.dirname(path))
 
-# def control(keyname):
-#     if keyname == 'w':
-#         my_drone.forward(50)
-#     if keyname == 'a':
-#         my_drone.backward(50)
-#     if keyname == 's':
-#         my_drone.left(50)
-#     if keyname == 'd':
-#         my_drone.right(50)
-#     if keyname == 'space':
-#         my_drone.up(50)
-#     if keyname == 'tab':
-#         my_drone.takeoff()
-#     if keyname == 'backspace':
-#         my_drone.land()
-#     if keyname == 'up':
-#         my_drone.up(50)
-#     if keyname == 'down':
-#         my_drone.down(50) 
+def control(keyname):
+     my_drone = tello.Tello()
+     if keyname == 'w':
+         my_drone.forward(50)
+     if keyname == 'a':
+         my_drone.backward(50)
+     if keyname == 's':
+         my_drone.left(50)
+     if keyname == 'd':
+         my_drone.right(50)
+     if keyname == 'space':
+         my_drone.up(50)
+     if keyname == 'tab':
+         my_drone.takeoff()
+     if keyname == 'backspace':
+         my_drone.land()
+     if keyname == 'up':
+         my_drone.up(50)
+     if keyname == 'down':
+         my_drone.down(50) 
+     my_drone.close()
     
 def main():
     drone = tellopy.Tello()
 
     pygame.init()
     pygame.display.init()
-    pygame.display.set_mode((200,200))
+    pygame.display.set_mode((300,300))
     pygame.font.init()
 
     global font
@@ -76,9 +80,28 @@ def main():
         frame_skip = 300
         while True:            
 #=============================================================================      
-            for e in pygame.event.get():
-                
-                for frame in container.decode(video=0):
+            for frame in container.decode(video=0):
+                for e in pygame.event.get():
+                    time.sleep(0.01)
+                    if e.type == pygame.locals.KEYDOWN:
+                        print('+' + pygame.key.name(e.key))
+                        keyname = pygame.key.name(e.key)
+                        status_print(keyname)
+                        if keyname == 'escape':
+                            drone.quit()
+                            exit(0)
+                        else:
+                            control(keyname)
+                            key_handler = keyname
+                    elif e.type == pygame.locals.KEYUP:
+                        print('-' + pygame.key.name(e.key))
+                        keyname = pygame.key.name(e.key)
+                        status_print(keyname)
+                        if type(key_handler) == str:
+                            getattr(drone, key_handler)(0)
+                        else:
+                            key_handler(drone, 0)
+                    
                     if 0 < frame_skip:
                         frame_skip = frame_skip - 1
                         print('Wait %s/300'%frame)
@@ -106,22 +129,7 @@ def main():
                         time_base = frame.time_base
                     frame_skip = int((time.time() - start_time)/time_base)
                 
-                if e.type == pygame.locals.KEYDOWN:
-                     print('+' + pygame.key.name(e.key))
-                     keyname = pygame.key.name(e.key)
-                     if keyname == 'escape':
-                         drone.quit()
-                         exit(0)
-                     else:
-                         control(keyname)
-                         key_handler = keyname
-                elif e.type == pygame.locals.KEYUP:
-                     print('-' + pygame.key.name(e.key))
-                     keyname = pygame.key.name(e.key)
-                     if type(key_handler) == str:
-                         getattr(drone, key_handler)(0)
-                     else:
-                         key_handler(drone, 0)
+                
                      
 #=============================================================================
 
