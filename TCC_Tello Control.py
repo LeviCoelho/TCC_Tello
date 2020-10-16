@@ -55,7 +55,7 @@ def toggle_recording(drone, speed):
     # start a new recording
     filename = '%s/Pictures/tello-%s.mp4' % (os.getenv('HOME'),
                                              datetime.datetime.now().strftime(date_fmt))
-    video_recorder = Popen([
+    video_recorder = Popen(
         'mencoder', '-', '-vc', 'x264', '-fps', '30', '-ovc', 'copy',
         '-of', 'lavf', '-lavfopts', 'format=mp4',
         # '-ffourcc', 'avc1',

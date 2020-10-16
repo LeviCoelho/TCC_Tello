@@ -19,15 +19,11 @@ def find(name, path):
 def main():
     drone = tellopy.Tello()
 
-    #cv2path = os.path.dirname(cv2.__file__)
-    #haar_path = find('haarcascades', cv2path)
-    #xml_name = 'haarcascade_frontalface_alt2.xml'
-    xml_path = '/home/levi/TCC_Tello/haarcascade_frontalface_alt2.xml' #os.path.join(haar_path, xml_name)
+    xml_path = '/home/levi/TCC_Tello/haarcascade_frontalface_alt2.xml' 
     
     # TODO: Inicializar Classificador
     clf = cv2.CascadeClassifier(xml_path)
-    
-    
+
     try:
         drone.connect()
         drone.wait_for_connection(60.0)
@@ -52,8 +48,7 @@ def main():
                     continue
                 start_time = time.time()
                 image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
-                #cv2.imshow('Original', image)
-                
+
                 # TODO: Classificar
                 faces = clf.detectMultiScale(image)
              
