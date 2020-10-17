@@ -11,7 +11,6 @@ import pygame.display
 import pygame.key
 import pygame.locals
 import pygame.font
-from easytello import tello
 
 date_fmt = '%Y-%m-%d_%H%M%S'
 
@@ -25,27 +24,28 @@ def find(name, path):
     # Caso nao encontre, recursao para diretorios anteriores
     return find(name, os.path.dirname(path))
 
-def control(keyname):
-     my_drone = tello.Tello()
+def control(keyname, drone):
+     my_drone = drone
      if keyname == 'w':
-         my_drone.forward(50)
+         my_drone.forward(15)
      if keyname == 'a':
-         my_drone.backward(50)
+         my_drone.left(15)
      if keyname == 's':
-         my_drone.left(50)
+         my_drone.backward(15)
      if keyname == 'd':
-         my_drone.right(50)
-     if keyname == 'space':
-         my_drone.up(50)
+         my_drone.right(15)
      if keyname == 'tab':
          my_drone.takeoff()
      if keyname == 'backspace':
          my_drone.land()
      if keyname == 'up':
-         my_drone.up(50)
+         my_drone.up(15)
      if keyname == 'down':
-         my_drone.down(50) 
-     my_drone.close()
+         my_drone.down(15) 
+     if keyname == 'left':
+         my_drone.counter_clockwise(25)
+     if keyname == 'right':
+         my_drone.clockwise(25)
     
 def main():
     drone = tellopy.Tello()
@@ -77,7 +77,7 @@ def main():
                 print('retry...')
 
         # skip first 300 frames
-        frame_skip = 300
+        frame_skip = 200
         while True:            
 #=============================================================================      
             for frame in container.decode(video=0):
@@ -91,16 +91,12 @@ def main():
                             drone.quit()
                             exit(0)
                         else:
-                            control(keyname)
+                            control(keyname,drone)
                             key_handler = keyname
                     elif e.type == pygame.locals.KEYUP:
                         print('-' + pygame.key.name(e.key))
                         keyname = pygame.key.name(e.key)
                         status_print(keyname)
-                        if type(key_handler) == str:
-                            getattr(drone, key_handler)(0)
-                        else:
-                            key_handler(drone, 0)
                     
                     if 0 < frame_skip:
                         frame_skip = frame_skip - 1
