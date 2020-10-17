@@ -52,7 +52,7 @@ def main():
 
     pygame.init()
     pygame.display.init()
-    pygame.display.set_mode((300,300))
+    Screen = pygame.display.set_mode((300,300))
     pygame.font.init()
 
     global font
@@ -77,12 +77,16 @@ def main():
                 print('retry...')
 
         # skip first 300 frames
-        frame_skip = 200
+        frame_skip = 300
+
         while True:            
 #=============================================================================      
             for frame in container.decode(video=0):
+                if 0 < frame_skip:
+                    frame_skip = frame_skip - 1
+                    print('Wait %s/300'%frame)
+                    continue
                 for e in pygame.event.get():
-                    time.sleep(0.01)
                     if e.type == pygame.locals.KEYDOWN:
                         print('+' + pygame.key.name(e.key))
                         keyname = pygame.key.name(e.key)
@@ -98,10 +102,7 @@ def main():
                         keyname = pygame.key.name(e.key)
                         status_print(keyname)
                     
-                    if 0 < frame_skip:
-                        frame_skip = frame_skip - 1
-                        print('Wait %s/300'%frame)
-                        continue
+                    
                     start_time = time.time()
                     image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
     
@@ -117,18 +118,15 @@ def main():
     
                      # Visualizar
                     cv2.imshow('Faces',image)
-                    
                     cv2.waitKey(1)
-                    if frame.time_base < 1.0/60:
+                    if frame.time_base < 1.0/60:             
+                        print(1.0/60)
                         time_base = 1.0/60
                     else:
                         time_base = frame.time_base
                     frame_skip = int((time.time() - start_time)/time_base)
-                
-                
-                     
+                   
 #=============================================================================
-
     except Exception as ex:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback)
