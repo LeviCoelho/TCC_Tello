@@ -14,7 +14,10 @@ Controls:
 - Z to toggle camera zoom state
   (zoomed-in widescreen or high FOV 4:3)
 """
-
+import traceback
+import av
+import cv2, os  # for avoidance of pylint error
+import numpy
 import time
 import sys
 import tellopy
@@ -144,6 +147,13 @@ def flight_data_recording(*args):
     return (video_recorder and "REC 00:00" or "")  # TODO: duration of recording
 
 def update_hud(hud, drone, flight_data):
+    
+        
+    xml_path = '/home/levi/TCC_Tello/haarcascade_frontalface_alt2.xml' 
+    
+    # TODO: Inicializar Classificador
+    clf = cv2.CascadeClassifier(xml_path)
+    
     (w,h) = (158,0) # width available on side of screen in 4:3 mode
     blits = []
     for element in hud:
@@ -158,8 +168,43 @@ def update_hud(hud, drone, flight_data):
     overlay.fill((0,0,0)) # remove for mplayer overlay mode
     for blit in blits:
         overlay.blit(*blit)
+         
     pygame.display.get_surface().blit(overlay, (0,0))
     pygame.display.update(overlay.get_rect())
+    
+   
+    image = cv2.cvtColor(overlay,cv2.COLOR_BGR2GRAY)
+    cv2.imshow('Faces',image)
+   	# TODO: Classificar
+    faces = clf.detectMultiScale(image)
+    
+    for x, y, w, h in faces:
+   	    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0))
+   	    # Create a file in ~/Pictures/ to receive image data from the drone.
+   	    path = '%s/Pictures/tello-%s.jpeg' % (os.getenv('HOME'),datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+   	    cv2.imwrite(path,image)
+    
+    # try:
+    # 	container = av.open(drone.get_video_stream())
+    # except av.AVError as ave:
+    # 	print(ave)
+    # 	print('retry')
+    
+    # for frame in container.decode(video=0):
+    # 	image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
+    
+    # 	# TODO: Classificar
+    # 	faces = clf.detectMultiScale(image)
+    
+    # 	# TODO: Desenhar retangulo
+    # 	for x, y, w, h in faces:
+    # 	    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0))
+    # 	    # Create a file in ~/Pictures/ to receive image data from the drone.
+    # 	    path = '%s/Pictures/tello-%s.jpeg' % (os.getenv('HOME'),datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+    # 	    cv2.imwrite(path,image)
+
+
+
 
 def status_print(text):
     pygame.display.set_caption(text)
@@ -212,11 +257,20 @@ def handleFileReceived(event, sender, data):
         fd.write(data)
     status_print('Saved photo to %s' % path)
 
+
+def find(name, path):
+    for root, dirs, files in os.walk(path):
+        if (name in files) or (name in dirs):
+            return os.path.join(root, name)
+    # Caso nao encontre, recursao para diretorios anteriores
+    return find(name, os.path.dirname(path))
+
 def main():
     pygame.init()
     pygame.display.init()
-    pygame.display.set_mode((1000, 600))
+    pygame.display.set_mode((500, 500))
     pygame.font.init()
+
 
     global font
     font = pygame.font.SysFont("dejavusansmono", 32)
