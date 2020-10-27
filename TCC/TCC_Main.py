@@ -71,7 +71,7 @@ def main():
         while container is None and 0 < retry:
             retry -= 1
             try:
-                container = av.open(drone.get_v\ideo_stream())
+                container = av.open(drone.get_video_stream())
             except av.AVError as ave:
                 print(ave)
                 print('retry...')
@@ -86,44 +86,44 @@ def main():
                     frame_skip = frame_skip - 1
                     print('Wait %s/300'%frame)
                     continue
-                for e in pygame.event.get():
-                    if e.type == pygame.locals.KEYDOWN:
-                        print('+' + pygame.key.name(e.key))
-                        keyname = pygame.key.name(e.key)
-                        status_print(keyname)
-                        if keyname == 'escape':
-                            drone.quit()
-                            exit(0)
-                        else:
-                            control(keyname,drone)
-                            key_handler = keyname
-                    elif e.type == pygame.locals.KEYUP:
-                        print('-' + pygame.key.name(e.key))
-                        keyname = pygame.key.name(e.key)
-                        status_print(keyname)
-                    
-                    start_time = time.time()
-                    image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
-    
-                    # TODO: Classificar
-                    faces = clf.detectMultiScale(image)
-                 
-                    # TODO: Desenhar retangulo
-                    for x, y, w, h in faces:
-                        cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0))
-                        # Create a file in ~/Pictures/ to receive image data from the drone.
-                        path = '%s/Pictures/tello-%s.jpeg' % (os.getenv('HOME'),datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
-                        cv2.imwrite(path,image)
-    
-                     # Visualizar
-                    cv2.imshow('Faces',image)
-                    cv2.waitKey(1)
-                    if frame.time_base < 1.0/60:             
-                        print(1.0/60)
-                        time_base = 1.0/60
+                e = pygame.event.poll()
+                if e.type == pygame.locals.KEYDOWN:
+                    print('+' + pygame.key.name(e.key))
+                    keyname = pygame.key.name(e.key)
+                    status_print(keyname)
+                    if keyname == 'escape':
+                        drone.quit()
+                        exit(0)
                     else:
-                        time_base = frame.time_base
-                    frame_skip = int((time.time() - start_time)/time_base)
+                        control(keyname,drone)
+                        key_handler = keyname
+                elif e.type == pygame.locals.KEYUP:
+                    print('-' + pygame.key.name(e.key))
+                    keyname = pygame.key.name(e.key)
+                    status_print(keyname)
+                
+                start_time = time.time()
+                image = cv2.cvtColor(numpy.array(frame.to_image()), cv2.COLOR_BGR2GRAY)
+
+                # TODO: Classificar
+                faces = clf.detectMultiScale(image)
+             
+                # TODO: Desenhar retangulo
+                for x, y, w, h in faces:
+                    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0))
+                    # Create a file in ~/Pictures/ to receive image data from the drone.
+                    path = '%s/Pictures/tello-%s.jpeg' % (os.getenv('HOME'),datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+                    cv2.imwrite(path,image)
+
+                 # Visualizar
+                cv2.imshow('Faces',image)
+                cv2.waitKey(1)
+                if frame.time_base < 1.0/60:             
+                    print(1.0/60)
+                    time_base = 1.0/60
+                else:
+                    time_base = frame.time_base
+                frame_skip = int((time.time() - start_time)/time_base)
                    
 #=============================================================================
     except Exception as ex:
